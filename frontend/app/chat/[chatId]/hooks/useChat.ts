@@ -27,7 +27,7 @@ export const useChat = () => {
   const { createChat, getHistory } = useChatApi();
 
   const { addStreamQuestion } = useQuestion();
-  const { t } = useTranslation(['chat']);
+  const { t } = useTranslation(["chat"]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -57,6 +57,7 @@ export const useChat = () => {
         const chat = await createChat(chatName);
         currentChatId = chat.chat_id;
         setChatId(currentChatId);
+        //TODO: update chat list here
       }
 
       void track("QUESTION_ASKED");
