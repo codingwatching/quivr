@@ -7,13 +7,13 @@ from pydantic import BaseModel
 from repository.user_identity.create_user_identity import create_user_identity
 
 
-class UserIdentityUpdatableProperties(BaseModel):
+class UserUpdatableProperties(BaseModel):
     openai_api_key: Optional[str]
 
 
-def update_user_identity(
+def update_user_properties(
     user_id: UUID,
-    user_identity_updatable_properties: UserIdentityUpdatableProperties,
+    user_identity_updatable_properties: UserUpdatableProperties,
 ) -> UserIdentity:
     supabase_client = get_supabase_client()
     response = (
@@ -24,10 +24,11 @@ def update_user_identity(
     )
 
     if len(response.data) == 0:
-        user_identity = UserIdentity(
-            user_id=user_id,
-            openai_api_key=user_identity_updatable_properties.openai_api_key,
+        return create_user_identity(
+            user_id, openai_api_key=user_identity_updatable_properties.openai_api_key
         )
-        return create_user_identity(user_identity)
 
-    return UserIdentity(**response.data[0])
+    user_identity = response.data[0]
+    openai_api_key = user_identity["openai_api_key"]
+
+    return UserIdentity(id=user_id, openai_api_key=openai_api_key)
