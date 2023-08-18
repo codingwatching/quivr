@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from models.brains import Brain
 from models.brains_subscription_invitations import BrainSubscription
 from models.prompt import PromptStatusEnum
-from models.users import User
+from models.user_identity import UserIdentity
 from pydantic import BaseModel
 from repository.brain.create_brain_user import create_brain_user
 from repository.brain.get_brain_by_id import get_brain_by_id
@@ -49,7 +49,7 @@ def invite_users_to_brain(
     brain_id: UUID,
     users: List[dict],
     origin: str = Depends(get_origin_header),
-    current_user: User = Depends(get_current_user),
+    current_user: UserIdentity = Depends(get_current_user),
 ):
     """
     Invite multiple users to a brain by their emails. This function creates
@@ -119,7 +119,7 @@ def get_brain_users(
     "/brains/{brain_id}/subscription",
 )
 async def remove_user_subscription(
-    brain_id: UUID, current_user: User = Depends(get_current_user)
+    brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
 ):
     """
     Remove a user's subscription to a brain
@@ -168,13 +168,15 @@ async def remove_user_subscription(
     dependencies=[Depends(AuthBearer())],
     tags=["BrainSubscription"],
 )
-def get_user_invitation(brain_id: UUID, current_user: User = Depends(get_current_user)):
+def get_user_invitation(
+    brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
+):
     """
     Get an invitation to a brain for a user. This function checks if the user
     has been invited to the brain and returns the invitation status.
     """
     if not current_user.email:
-        raise HTTPException(status_code=400, detail="User email is not defined")
+        raise HTTPException(status_code=400, detail="UserIdentity email is not defined")
 
     subscription = BrainSubscription(brain_id=brain_id, email=current_user.email)
 
@@ -202,7 +204,7 @@ def get_user_invitation(brain_id: UUID, current_user: User = Depends(get_current
     tags=["Brain"],
 )
 async def accept_invitation(
-    brain_id: UUID, current_user: User = Depends(get_current_user)
+    brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
 ):
     """
     Accept an invitation to a brain for a user. This function removes the
@@ -210,7 +212,7 @@ async def accept_invitation(
     brain users.
     """
     if not current_user.email:
-        raise HTTPException(status_code=400, detail="User email is not defined")
+        raise HTTPException(status_code=400, detail="UserIdentity email is not defined")
 
     subscription = BrainSubscription(brain_id=brain_id, email=current_user.email)
 
@@ -245,14 +247,14 @@ async def accept_invitation(
     tags=["Brain"],
 )
 async def decline_invitation(
-    brain_id: UUID, current_user: User = Depends(get_current_user)
+    brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
 ):
     """
     Decline an invitation to a brain for a user. This function removes the
     invitation from the subscription invitations.
     """
     if not current_user.email:
-        raise HTTPException(status_code=400, detail="User email is not defined")
+        raise HTTPException(status_code=400, detail="UserIdentity email is not defined")
 
     subscription = BrainSubscription(brain_id=brain_id, email=current_user.email)
 
@@ -287,7 +289,7 @@ class BrainSubscriptionUpdatableProperties(BaseModel):
 def update_brain_subscription(
     brain_id: UUID,
     subscription: BrainSubscriptionUpdatableProperties,
-    current_user: User = Depends(get_current_user),
+    current_user: UserIdentity = Depends(get_current_user),
 ):
     user_email = subscription.email
     if user_email == current_user.email:

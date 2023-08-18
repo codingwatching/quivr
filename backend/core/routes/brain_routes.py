@@ -8,7 +8,7 @@ from models.databases.supabase.brains import (
     CreateBrainProperties,
 )
 from models.settings import BrainRateLimiting
-from models.users import User
+from models.user_identity import UserIdentity
 from repository.brain.create_brain import create_brain
 from repository.brain.create_brain_user import create_brain_user
 from repository.brain.get_brain_details import get_brain_details
@@ -17,16 +17,11 @@ from repository.brain.get_default_user_brain_or_create_new import (
     get_default_user_brain_or_create_new,
 )
 from repository.brain.get_user_brains import get_user_brains
-from repository.brain.set_as_default_brain_for_user import (
-    set_as_default_brain_for_user,
-)
+from repository.brain.set_as_default_brain_for_user import set_as_default_brain_for_user
 from repository.brain.update_brain import update_brain_by_id
 from repository.prompt.delete_prompt_py_id import delete_prompt_by_id
 from repository.prompt.get_prompt_by_id import get_prompt_by_id
-
-from routes.authorizations.brain_authorization import (
-    has_brain_authorization,
-)
+from routes.authorizations.brain_authorization import has_brain_authorization
 from routes.authorizations.types import RoleEnum
 
 logger = get_logger(__name__)
@@ -36,7 +31,7 @@ brain_router = APIRouter()
 
 # get all brains
 @brain_router.get("/brains/", dependencies=[Depends(AuthBearer())], tags=["Brain"])
-async def brain_endpoint(current_user: User = Depends(get_current_user)):
+async def brain_endpoint(current_user: UserIdentity = Depends(get_current_user)):
     """
     Retrieve all brains for the current user.
 
@@ -54,7 +49,9 @@ async def brain_endpoint(current_user: User = Depends(get_current_user)):
 @brain_router.get(
     "/brains/default/", dependencies=[Depends(AuthBearer())], tags=["Brain"]
 )
-async def get_default_brain_endpoint(current_user: User = Depends(get_current_user)):
+async def get_default_brain_endpoint(
+    current_user: UserIdentity = Depends(get_current_user),
+):
     """
     Retrieve the default brain for the current user. If the user doesnt have one, it creates one.
 
@@ -101,7 +98,7 @@ async def get_brain_endpoint(
 @brain_router.post("/brains/", dependencies=[Depends(AuthBearer())], tags=["Brain"])
 async def create_brain_endpoint(
     brain: CreateBrainProperties,
-    current_user: User = Depends(get_current_user),
+    current_user: UserIdentity = Depends(get_current_user),
 ):
     """
     Create a new brain with given
@@ -203,7 +200,7 @@ async def update_brain_endpoint(
 )
 async def set_as_default_brain_endpoint(
     brain_id: UUID,
-    user: User = Depends(get_current_user),
+    user: UserIdentity = Depends(get_current_user),
 ):
     """
     Set a brain as default for the current user.
